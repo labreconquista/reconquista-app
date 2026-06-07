@@ -1,0 +1,920 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="theme-color" content="#2563eb">
+    <meta name="description" content="Sistema de Gestión de Pedidos - Laboratorio Reconquista">
+    <link rel="manifest" href="manifest.json">
+    <link rel="icon" type="image/png" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 192 192'><rect fill='%232563eb' width='192' height='192'/><text x='50%' y='50%' font-size='100' fill='white' text-anchor='middle' dominant-baseline='middle' font-weight='bold'>R</text></svg>">
+    <link rel="apple-touch-icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 180 180'><rect fill='%232563eb' width='180' height='180'/><text x='50%' y='50%' font-size='90' fill='white' text-anchor='middle' dominant-baseline='middle' font-weight='bold'>R</text></svg>">
+    <title>RECONQUISTA - Gestión de Pedidos</title>
+    <style>
+        :root {
+            color-scheme: light;
+            --primary: #2563eb;
+            --primary-dark: #1e40af;
+            --success: #16a34a;
+            --danger: #dc2626;
+            --gray-100: #f3f4f6;
+            --gray-200: #e5e7eb;
+            --gray-300: #d1d5db;
+            --gray-700: #374151;
+            --gray-900: #111827;
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            background: white;
+            color: var(--gray-900);
+        }
+
+        .auth-screen {
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: linear-gradient(135deg, var(--primary) 0%, var(--primary-dark) 100%);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            z-index: 1000;
+        }
+
+        .auth-card {
+            background: white;
+            padding: 32px 24px;
+            border-radius: 12px;
+            box-shadow: 0 10px 40px rgba(0,0,0,0.1);
+            width: 100%;
+            max-width: 360px;
+        }
+
+        .auth-logo {
+            font-size: 48px;
+            margin-bottom: 16px;
+            text-align: center;
+        }
+
+        .auth-title {
+            font-size: 24px;
+            font-weight: 700;
+            margin-bottom: 8px;
+            color: var(--gray-900);
+        }
+
+        .auth-subtitle {
+            font-size: 14px;
+            color: var(--gray-700);
+            margin-bottom: 24px;
+        }
+
+        .auth-form input {
+            width: 100%;
+            padding: 12px;
+            margin-bottom: 12px;
+            border: 1px solid var(--gray-300);
+            border-radius: 6px;
+            font-size: 14px;
+        }
+
+        .auth-form input:focus {
+            outline: none;
+            border-color: var(--primary);
+            box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.1);
+        }
+
+        .auth-btn {
+            width: 100%;
+            padding: 12px;
+            background: var(--primary);
+            color: white;
+            border: none;
+            border-radius: 6px;
+            font-weight: 600;
+            cursor: pointer;
+            font-size: 14px;
+            transition: background 0.2s;
+        }
+
+        .auth-btn:hover {
+            background: var(--primary-dark);
+        }
+
+        .auth-error {
+            background: #fee2e2;
+            color: var(--danger);
+            padding: 12px;
+            border-radius: 6px;
+            margin-bottom: 16px;
+            font-size: 13px;
+        }
+
+        .hidden {
+            display: none !important;
+        }
+
+        .container {
+            display: flex;
+            height: 100vh;
+        }
+
+        .sidebar {
+            width: 280px;
+            background: var(--gray-100);
+            border-right: 1px solid var(--gray-200);
+            overflow-y: auto;
+            padding: 16px;
+            display: flex;
+            flex-direction: column;
+        }
+
+        .main {
+            flex: 1;
+            overflow-y: auto;
+            padding: 24px;
+            display: flex;
+            flex-direction: column;
+        }
+
+        .logo {
+            font-size: 14px;
+            font-weight: 600;
+            color: var(--primary);
+            margin-bottom: 20px;
+            padding-bottom: 16px;
+            border-bottom: 1px solid var(--gray-200);
+        }
+
+        .search-box {
+            width: 100%;
+            padding: 8px 12px;
+            border: 1px solid var(--gray-300);
+            border-radius: 6px;
+            font-size: 13px;
+            margin-bottom: 12px;
+        }
+
+        .proveedor-list {
+            flex: 1;
+            overflow-y: auto;
+        }
+
+        .proveedor-item {
+            padding: 12px;
+            margin-bottom: 8px;
+            border-radius: 6px;
+            cursor: pointer;
+            background: white;
+            border: 1px solid var(--gray-200);
+            transition: all 0.2s;
+            font-size: 13px;
+        }
+
+        .proveedor-item:hover {
+            background: var(--gray-100);
+            border-color: var(--primary);
+        }
+
+        .proveedor-item.active {
+            background: var(--primary);
+            color: white;
+            border-color: var(--primary);
+        }
+
+        .proveedor-nombre {
+            font-weight: 600;
+            margin-bottom: 4px;
+        }
+
+        .proveedor-rubro {
+            font-size: 11px;
+            opacity: 0.7;
+        }
+
+        .logout-btn {
+            padding: 8px 12px;
+            background: var(--danger);
+            color: white;
+            border: none;
+            border-radius: 6px;
+            font-size: 12px;
+            cursor: pointer;
+            margin-top: auto;
+            font-weight: 600;
+        }
+
+        .logout-btn:hover {
+            background: #b91c1c;
+        }
+
+        .header {
+            margin-bottom: 24px;
+        }
+
+        .header h1 {
+            font-size: 28px;
+            margin-bottom: 8px;
+        }
+
+        .header p {
+            color: var(--gray-700);
+            font-size: 14px;
+        }
+
+        .contacto-section {
+            background: var(--gray-100);
+            padding: 16px;
+            border-radius: 8px;
+            margin-bottom: 20px;
+        }
+
+        .contacto-item {
+            margin-bottom: 12px;
+            font-size: 13px;
+        }
+
+        .contacto-label {
+            font-weight: 600;
+            color: var(--gray-700);
+            display: block;
+            margin-bottom: 4px;
+        }
+
+        .contacto-valor {
+            color: var(--primary);
+            word-break: break-all;
+        }
+
+        .productos-section h3 {
+            font-size: 16px;
+            margin-bottom: 12px;
+            margin-top: 20px;
+        }
+
+        .producto-list {
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+            margin-bottom: 20px;
+        }
+
+        .producto-item {
+            display: flex;
+            align-items: flex-start;
+            padding: 10px;
+            background: white;
+            border: 1px solid var(--gray-200);
+            border-radius: 6px;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+
+        .producto-item:hover {
+            border-color: var(--primary);
+            background: var(--gray-100);
+        }
+
+        .producto-item input[type="checkbox"] {
+            margin-right: 10px;
+            margin-top: 4px;
+            cursor: pointer;
+        }
+
+        .producto-info {
+            flex: 1;
+        }
+
+        .producto-nombre {
+            font-weight: 600;
+            font-size: 14px;
+            margin-bottom: 4px;
+        }
+
+        .acciones {
+            display: flex;
+            gap: 12px;
+            margin-top: 24px;
+            padding-top: 24px;
+            border-top: 1px solid var(--gray-200);
+        }
+
+        .btn {
+            flex: 1;
+            padding: 12px 16px;
+            border: none;
+            border-radius: 6px;
+            font-weight: 600;
+            cursor: pointer;
+            font-size: 14px;
+            transition: all 0.2s;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
+        }
+
+        .btn-whatsapp {
+            background: #25d366;
+            color: white;
+        }
+
+        .btn-whatsapp:hover {
+            background: #20ba5c;
+        }
+
+        .btn-whatsapp:disabled {
+            background: var(--gray-300);
+            cursor: not-allowed;
+        }
+
+        .btn-email {
+            background: var(--primary);
+            color: white;
+        }
+
+        .btn-email:hover {
+            background: var(--primary-dark);
+        }
+
+        .btn-email:disabled {
+            background: var(--gray-300);
+            cursor: not-allowed;
+        }
+
+        .mensaje-preview {
+            background: var(--gray-100);
+            padding: 16px;
+            border-radius: 6px;
+            margin-top: 16px;
+            font-size: 13px;
+            line-height: 1.6;
+            color: var(--gray-700);
+            white-space: pre-wrap;
+            word-break: break-word;
+        }
+
+        .info-entrega {
+            background: #fef3c7;
+            border-left: 4px solid #f59e0b;
+            padding: 12px;
+            margin-bottom: 20px;
+            border-radius: 4px;
+            font-size: 13px;
+            line-height: 1.5;
+        }
+
+        .no-selection {
+            padding: 40px 20px;
+            text-align: center;
+            color: var(--gray-700);
+        }
+
+        .no-selection p {
+            font-size: 14px;
+        }
+
+        @media (max-width: 768px) {
+            .container {
+                flex-direction: column;
+            }
+            .sidebar {
+                width: 100%;
+                border-right: none;
+                border-bottom: 1px solid var(--gray-200);
+                max-height: 200px;
+            }
+            .main {
+                padding: 16px;
+            }
+            .header h1 {
+                font-size: 20px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div id="authScreen" class="auth-screen">
+        <div class="auth-card">
+            <div class="auth-logo">🏭</div>
+            <div class="auth-title">RECONQUISTA</div>
+            <div class="auth-subtitle">Sistema de Gestión de Pedidos</div>
+            <div id="authError" class="auth-error hidden"></div>
+            <form class="auth-form" onsubmit="handleLogin(event)">
+                <input type="text" id="username" placeholder="Usuario" required>
+                <input type="password" id="password" placeholder="Contraseña" required>
+                <button type="submit" class="auth-btn">Ingresar</button>
+            </form>
+        </div>
+    </div>
+
+    <div id="appContainer" class="hidden">
+        <div class="container">
+            <div class="sidebar">
+                <div class="logo">🏭 RECONQUISTA 2026</div>
+                <input
+                    type="text"
+                    class="search-box"
+                    id="searchBox"
+                    placeholder="Buscar proveedor..."
+                >
+                <div class="proveedor-list" id="proveedorList"></div>
+                <button class="logout-btn" onclick="handleLogout()">Cerrar sesión</button>
+            </div>
+            <div class="main" id="mainContent">
+                <div class="no-selection">
+                    <p>👈 Selecciona un proveedor para comenzar</p>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        const CREDENTIALS = {
+            username: 'reconquista',
+            password: 'lab2026'
+        };
+
+        const GOOGLE_SHEET_ID = '1Q0v3ZXk2Hl_msQwaHuSrDZl4ZiGf3YOD';
+        const GOOGLE_SHEET_GID = '329026959'; // ÍNDICE sheet ID
+
+        let proveedores = [
+            {
+                id: 1,
+                nombre: 'RIWO',
+                rubro: 'Vaselinas, ceras, parafina, glicerina',
+                persona: 'CLAUDIA',
+                tel: '4727-0080',
+                tel_celular: '1149758551',
+                email: 'pedidos@riwosrl.com',
+                productos: ['VASELINA SOLIDA AMARILLA', 'VASELINA LIQUIDA BLANCA 85', 'CARNAUBA 3', 'PARAFINA', 'GLICERINA']
+            },
+            {
+                id: 2,
+                nombre: 'DIRANSA',
+                rubro: 'SF, PW, IPEL, THYOSIL',
+                persona: 'MARITA',
+                tel: '11 5578-2476',
+                email: 'mdeluca@diransa.com.ar',
+                productos: ['SF10', 'PW7', 'THYOSIL 203', '1052', 'SF2', 'IPEL 496']
+            },
+            {
+                id: 3,
+                nombre: 'CAFYPA',
+                rubro: 'Terpineol',
+                persona: 'Fiorella',
+                tel: '113818-8533',
+                email: 'ventas@cafypa.com.ar',
+                productos: ['TERPINEOL 30/50 LITROS', 'PINO INDIMAX']
+            },
+            {
+                id: 4,
+                nombre: 'THINNER TEDE',
+                rubro: 'Solventes, thinners, alcoholes, lacas',
+                persona: 'ABEL / MARIANELA / TOMAS',
+                tel: '11 3181 3802',
+                email: 'contacto@thinnertede.com',
+                productos: ['BUTILGLICOL', 'AGUARRAS', 'THINNER SELLO ORO', 'LACA 76016', 'ETANOL', 'ISOBUTANOL', 'ACETATO DE BUTILO', 'ALCOHOL ISOPROPILICO']
+            },
+            {
+                id: 5,
+                nombre: 'FEMAVI',
+                rubro: 'Emulfem',
+                persona: 'ALBERTO NASER',
+                tel: '1544165030',
+                email: 'contacto@femavi.com.ar',
+                productos: ['EMULFEM']
+            },
+            {
+                id: 6,
+                nombre: 'SURFACTAN',
+                rubro: 'Pigmentos / colores concentrados',
+                persona: 'WENCESLAO',
+                tel: '1144405877',
+                email: 'surfac@surfactan.com.ar',
+                productos: ['NEGRO', 'BLANCO', 'AMARILLO', 'NARANJA', 'ROJO', 'PARDO - MARRON', 'OCRE - MOSTAZA', 'AZUL']
+            },
+            {
+                id: 7,
+                nombre: 'VAN ROSSUM',
+                rubro: 'Trietanolamina, oleico, soda, colofonia',
+                persona: 'VENTAS',
+                tel: '4554-5787',
+                email: 'info@distvr.com.ar',
+                productos: ['TRIETA', 'OLEICO', 'SODA CAUSTICA', 'COLOFONIA']
+            },
+            {
+                id: 8,
+                nombre: 'QUIMARGEN',
+                rubro: 'Productos PU, lacas, fillers',
+                persona: 'MARTIN',
+                tel: '11 4474-6486',
+                email: 'martin@quimargen.com.ar',
+                productos: ['PU AL40', 'TOP DU', 'TOP HG - HIDROLACA', 'FILLER']
+            },
+            {
+                id: 9,
+                nombre: 'UNIPLAST',
+                rubro: 'Envases plásticos',
+                persona: 'LUIS',
+                tel: '4236-1961',
+                email: 'ventas@uniplast.com.ar',
+                productos: ['ENVASES 500CC', 'ENVASES 1000CC', 'ENVASES 250CC', 'ENVASES 10000CC']
+            },
+            {
+                id: 10,
+                nombre: 'SOLMEK ENVASES',
+                rubro: 'Botellas, bidones, potes plásticos',
+                persona: 'NATALIA',
+                tel: '4651-0802',
+                email: 'natalia.abouchain@solmek.com.ar',
+                productos: ['BOTELLA 500CC', 'BOTELLA 1000CC', 'BIDON 5LT', 'BOTELLA 250CC', 'POTE 250CC', 'POTE 500CC']
+            },
+            {
+                id: 11,
+                nombre: 'INDIMAX',
+                rubro: 'Ácido oxálico, oleico, carbonato de potasio',
+                persona: 'DANIEL',
+                tel: '4713-1900',
+                email: 'contacto@indimax.com.ar',
+                productos: ['ACIDO OXALICO', 'ACIDO OLEICO', 'CARBONATO DE POTASIO']
+            },
+            {
+                id: 12,
+                nombre: 'QUIMICA OLIVOS',
+                rubro: 'Nonil fenol, oleico, trieta, anilina',
+                persona: 'VALERIA',
+                tel: '1135959842',
+                email: 'ventas@quimicaolivos.com.ar',
+                productos: ['NONIL FENOL 10 MOLES', 'ACIDO OLEICO BIDESTILADO', 'TRIETA 85%']
+            },
+            {
+                id: 13,
+                nombre: 'FULL CHEM',
+                rubro: 'Aceite siliconado',
+                persona: 'VENTAS',
+                tel: '4762-5206',
+                email: 'ventas@fullchem.com.ar',
+                productos: ['ACEITE SILICONA 25 LITROS', 'ACEITE SILICONA TAMBOR 200']
+            },
+            {
+                id: 14,
+                nombre: 'TRIPLAS',
+                rubro: 'Envases',
+                persona: 'CECILIA',
+                tel: '4201-8818',
+                email: 'envasestriplas@gmail.com',
+                productos: ['ENVASE 1000GR', 'ENVASE 4000GR', 'ENVASE 20 LITROS']
+            },
+            {
+                id: 15,
+                nombre: 'ANCO CERA',
+                rubro: 'Ceras (Ancowax MH 421)',
+                persona: 'JORGE / GUSTAVO / RAQUEL',
+                tel: '4763-8332',
+                email: 'jorge@anco.com.ar',
+                productos: ['ANCOWAX MH 421']
+            },
+            {
+                id: 16,
+                nombre: 'FRANCIONI',
+                rubro: 'Terpineol',
+                persona: 'VENTAS',
+                tel: '+54 11-4776-2819',
+                email: 'info@alfredofrancioni.com.ar',
+                productos: ['TERPINEOL 30/50 LITROS']
+            },
+            {
+                id: 17,
+                nombre: 'INPROSUD',
+                rubro: 'Nigrosinas, marrón Surfactan',
+                persona: 'ADRIAN PODRANOV',
+                tel: '15 5249 7094',
+                email: 'contacto@inprosud.com.ar',
+                productos: ['NIGROSINA AL AGUA', 'NIGROSINA AL ALCOHOL', 'MARRON SURFACTAN']
+            },
+            {
+                id: 18,
+                nombre: 'SERQUIM',
+                rubro: 'Trietanolamina, nonil fenol',
+                persona: 'CLAUDIO PISSINIS',
+                tel: '11 3481 7304',
+                email: 'claudio.pissinis@serquim.com.ar',
+                productos: ['TRIETA', 'NONIL FENOL 10 MOLES']
+            },
+            {
+                id: 19,
+                nombre: 'KOPELCO',
+                rubro: 'Látex',
+                persona: 'ELENA Y DIEGO',
+                tel: '1167481811',
+                email: 'contacto@kopelco.com.ar',
+                productos: ['LATEX', 'ACEITE SILICONA']
+            },
+            {
+                id: 20,
+                nombre: 'OSCAR AMESTOY',
+                rubro: 'Pigmentos Bayer',
+                persona: 'OSCAR AMESTOY',
+                tel: '4624-5956',
+                email: 'oscar@amestoy.com.ar',
+                productos: ['MARRON BAYER BY FERROX 658 M', 'AMARILLO BAYER BY FERROX 918 LO']
+            },
+            {
+                id: 21,
+                nombre: 'ALFAQUIM',
+                rubro: 'Colorantes Alfaplex',
+                persona: 'VENTAS',
+                tel: '1553131412',
+                email: 'info@alfaquim.com.ar',
+                productos: ['NEGRO ALFAPLEX MRL']
+            },
+            {
+                id: 22,
+                nombre: 'PACKMAN',
+                rubro: 'Etiquetas Autoadhesivas',
+                persona: 'DARIO / PRISCILA',
+                tel: '1149750180',
+                email: 'imprentapackman@gmail.com',
+                productos: ['ETIQUETAS GRANDES', 'ETIQUETAS CHICAS']
+            },
+            {
+                id: 23,
+                nombre: 'LAQUIMAR SACIF',
+                rubro: 'Ceras',
+                persona: 'ANTONELLA',
+                tel: 'Contactar',
+                email: 'contacto@laquimar.com.ar',
+                productos: ['CERA CARNAUBA NO.3 - Bolsa 25kg (USD 12,75/kg)']
+            },
+            {
+                id: 24,
+                nombre: 'QUIMICA COLOR - CALVANO',
+                rubro: 'Colorantes',
+                persona: 'LUIS',
+                tel: '1153081794',
+                email: 'luis@quimicacolor.com.ar',
+                productos: ['NIGROSINA AL ALCOHOL - Bolsa 25kg (USD 26/kg)', 'ANILINAS AL ALCOHOL - Bolsa 25kg (USD 55/kg)', 'NIGROSINA AL AGUA - Bolsa 25kg (USD 26/kg)', 'ANILINAS AL AGUA - Bolsa 25kg (USD 45/kg)']
+            },
+            {
+                id: 25,
+                nombre: 'REYDER',
+                rubro: 'Colofonia',
+                persona: 'JUSTO GONZALEZ',
+                tel: '1130874824',
+                email: 'justo@reyder.com.ar',
+                productos: ['COLOFONIA - Bolsa 25kg (USD 2,05/kg + IVA) - Mínimo 4 bolsas']
+            }
+        ];
+
+        let proveedorSeleccionado = null;
+        let productosSeleccionados = {};
+        let autenticado = false;
+
+        function handleLogin(e) {
+            e.preventDefault();
+            const username = document.getElementById('username').value;
+            const password = document.getElementById('password').value;
+
+            if (username === CREDENTIALS.username && password === CREDENTIALS.password) {
+                autenticado = true;
+                localStorage.setItem('reconquista_auth', 'true');
+                document.getElementById('authScreen').classList.add('hidden');
+                document.getElementById('appContainer').classList.remove('hidden');
+                init();
+            } else {
+                document.getElementById('authError').textContent = 'Usuario o contraseña incorrectos';
+                document.getElementById('authError').classList.remove('hidden');
+            }
+        }
+
+        function handleLogout() {
+            autenticado = false;
+            localStorage.removeItem('reconquista_auth');
+            document.getElementById('authScreen').classList.remove('hidden');
+            document.getElementById('appContainer').classList.add('hidden');
+            document.getElementById('username').value = '';
+            document.getElementById('password').value = '';
+            document.getElementById('authError').classList.add('hidden');
+        }
+
+        function checkAuth() {
+            if (localStorage.getItem('reconquista_auth') === 'true') {
+                autenticado = true;
+                document.getElementById('authScreen').classList.add('hidden');
+                document.getElementById('appContainer').classList.remove('hidden');
+                init();
+            }
+        }
+
+        function init() {
+            console.log(`✅ ${proveedores.length} proveedores cargados localmente`);
+            renderProveedores();
+            document.getElementById('searchBox').addEventListener('input', filtrarProveedores);
+        }
+
+        function renderProveedores() {
+            const list = document.getElementById('proveedorList');
+            const search = document.getElementById('searchBox').value.toLowerCase();
+
+            list.innerHTML = proveedores
+                .filter(p => p.nombre.toLowerCase().includes(search) || p.rubro.toLowerCase().includes(search))
+                .map(p => `
+                    <div class="proveedor-item ${proveedorSeleccionado?.id === p.id ? 'active' : ''}"
+                         onclick="seleccionarProveedor(${p.id})">
+                        <div class="proveedor-nombre">${p.nombre}</div>
+                        <div class="proveedor-rubro">${p.rubro}</div>
+                    </div>
+                `)
+                .join('');
+        }
+
+        function filtrarProveedores() {
+            renderProveedores();
+        }
+
+        function seleccionarProveedor(id) {
+            proveedorSeleccionado = proveedores.find(p => p.id === id);
+            productosSeleccionados[id] = productosSeleccionados[id] || [];
+            renderProveedores();
+            renderProveedor();
+        }
+
+        function renderProveedor() {
+            if (!proveedorSeleccionado) return;
+
+            const p = proveedorSeleccionado;
+            const seleccionados = productosSeleccionados[p.id] || [];
+
+            const htmlProductos = p.productos.map((producto, idx) => `
+                <label class="producto-item">
+                    <input type="checkbox"
+                           value="${idx}"
+                           ${seleccionados.includes(idx) ? 'checked' : ''}
+                           onchange="toggleProducto(${p.id}, ${idx})">
+                    <div class="producto-info">
+                        <div class="producto-nombre">${producto}</div>
+                    </div>
+                </label>
+            `).join('');
+
+            const htmlContacto = `
+                <div class="contacto-section">
+                    <div class="contacto-item">
+                        <span class="contacto-label">Contacto:</span>
+                        <span class="contacto-valor">${p.persona}</span>
+                    </div>
+                    ${p.tel ? `<div class="contacto-item">
+                        <span class="contacto-label">Teléfono:</span>
+                        <span class="contacto-valor">${p.tel}</span>
+                    </div>` : ''}
+                    ${p.tel_celular ? `<div class="contacto-item">
+                        <span class="contacto-label">Celular:</span>
+                        <span class="contacto-valor">${p.tel_celular}</span>
+                    </div>` : ''}
+                    ${p.email ? `<div class="contacto-item">
+                        <span class="contacto-label">Email:</span>
+                        <span class="contacto-valor">${p.email}</span>
+                    </div>` : ''}
+                </div>
+            `;
+
+            let whatsappNum = '';
+            if (p.tel_celular) {
+                whatsappNum = p.tel_celular.replace(/\D/g, '');
+            } else if (p.tel && p.tel !== 'Contactar') {
+                whatsappNum = p.tel.replace(/\D/g, '');
+            }
+
+            const esDisponible = seleccionados.length > 0;
+
+            document.getElementById('mainContent').innerHTML = `
+                <div class="header">
+                    <h1>${p.nombre}</h1>
+                    <p>${p.rubro}</p>
+                </div>
+
+                ${htmlContacto}
+
+                <div class="info-entrega">
+                    <strong>📍 Entregas:</strong> Lunes a Jueves de 10 a 15hs<br>
+                    <strong>📍 Dirección:</strong> Palpa 3554, CABA
+                </div>
+
+                <div class="productos-section">
+                    <h3>Selecciona los productos que necesitas:</h3>
+                    <div class="producto-list">
+                        ${htmlProductos}
+                    </div>
+                </div>
+
+                ${esDisponible ? `
+                    <div class="mensaje-preview" id="preview"></div>
+                    <div class="acciones">
+                        ${whatsappNum ? `<button class="btn btn-whatsapp" onclick="enviarWhatsapp(${p.id}, '${whatsappNum}')">
+                            💬 WhatsApp
+                        </button>` : ''}
+                        <button class="btn btn-email" onclick="enviarEmail(${p.id}, '${p.email}')">
+                            📧 Email
+                        </button>
+                    </div>
+                ` : ''}
+            `;
+
+            if (esDisponible) {
+                actualizarPreview();
+            }
+        }
+
+        function toggleProducto(id, idx) {
+            if (!productosSeleccionados[id]) {
+                productosSeleccionados[id] = [];
+            }
+
+            if (productosSeleccionados[id].includes(idx)) {
+                productosSeleccionados[id] = productosSeleccionados[id].filter(i => i !== idx);
+            } else {
+                productosSeleccionados[id].push(idx);
+            }
+
+            renderProveedor();
+        }
+
+        function actualizarPreview() {
+            const p = proveedorSeleccionado;
+            const seleccionados = productosSeleccionados[p.id] || [];
+
+            const items = seleccionados.map(idx => `• ${p.productos[idx]}`).join('\n');
+
+            const mensaje = `Hola ${p.nombre},
+
+Te envío los productos que necesito para la próxima entrega:
+
+${items}
+
+Entrega: Lunes a Jueves de 10 a 15hs en Palpa 3554, CABA
+
+Gracias`;
+
+            document.getElementById('preview').textContent = mensaje;
+        }
+
+        function enviarWhatsapp(id, numero) {
+            const p = proveedorSeleccionado;
+            const seleccionados = productosSeleccionados[id] || [];
+
+            const items = seleccionados.map(idx => `• ${p.productos[idx]}`).join('\n');
+
+            const mensaje = `Hola ${p.nombre},
+
+Te envío los productos que necesito para la próxima entrega:
+
+${items}
+
+Entrega: Lunes a Jueves de 10 a 15hs en Palpa 3554, CABA
+
+Gracias`;
+
+            const numeroFormato = numero.replace(/\D/g, '');
+            const url = `https://wa.me/${numeroFormato}?text=${encodeURIComponent(mensaje)}`;
+            window.open(url, '_blank');
+        }
+
+        function enviarEmail(id, email) {
+            const p = proveedorSeleccionado;
+            const seleccionados = productosSeleccionados[id] || [];
+
+            const items = seleccionados.map(idx => `• ${p.productos[idx]}`).join('\n');
+
+            const asunto = `Pedido de productos - ${p.nombre}`;
+            const cuerpo = `Hola ${p.nombre},
+
+Te envío los productos que necesito para la próxima entrega:
+
+${items}
+
+Entrega: Lunes a Jueves de 10 a 15hs en Palpa 3554, CABA
+
+Gracias`;
+
+            const url = `mailto:${email}?subject=${encodeURIComponent(asunto)}&body=${encodeURIComponent(cuerpo)}`;
+            window.open(url, '_blank');
+        }
+
+        // Registrar Service Worker
+        if ('serviceWorker' in navigator) {
+            navigator.serviceWorker.register('sw.js').catch(err => console.log('SW error:', err));
+        }
+
+        // Verificar autenticación al cargar
+        checkAuth();
+    </script>
+</body>
+</html>
