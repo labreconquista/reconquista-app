@@ -1,71 +1,73 @@
+// sw.js — Service Worker para RECONQUISTA PWA
+// Versión del caché: incrementar al actualizar archivos
 const CACHE_NAME = 'reconquista-v1';
-const FILES_TO_CACHE = [
+const ASSETS = [
   '/',
   '/index.html',
   '/manifest.json'
 ];
 
-// Instalar Service Worker
+// Instalación: precachear los archivos de la app
 self.addEventListener('install', event => {
   event.waitUntil(
-    caches.open(CACHE_NAME)
-      .then(cache => cache.addAll(FILES_TO_CACHE))
-      .then(() => self.skipWaiting())
+    caches.open(CACHE_NAME).then(cache => {
+      return cache.addAll(ASSETS);
+    })
   );
+  // Activar inmediatamente sin esperar a que cierren tabs anteriores
+  self.skipWaiting();
 });
 
-// Activar Service Worker
+// Activación: limpiar cachés viejos
 self.addEventListener('activate', event => {
   event.waitUntil(
-    caches.keys().then(cacheNames => {
-      return Promise.all(
-        cacheNames.map(cacheName => {
-          if (cacheName !== CACHE_NAME) {
-            return caches.delete(cacheName);
-          }
-        })
-      );
-    }).then(() => self.clients.claim())
+    caches.keys().then(keys =>
+      Promise.all(
+        keys
+          .filter(key => key !== CACHE_NAME)
+          .map(key => caches.delete(key))
+      )
+    )
   );
+  // Tomar control de todas las tabs inmediatamente
+  self.clients.claim();
 });
 
-// Estrategia de caché: Network first, fallback to cache
+// Fetch: estrategia "Cache First, Network Fallback"
+// → La app carga instantáneo desde caché
+// → Si no hay red, igual funciona (solo lectura de datos)
 self.addEventListener('fetch', event => {
-  // Solo cachear GET
-  if (event.request.method !== 'GET') {
+  // Solo interceptar requests GET del mismo origen
+  if (event.request.method !== 'GET') return;
+
+  const url = new URL(event.request.url);
+
+  // No interceptar requests a Google Sheets API ni externos
+  if (!url.origin.includes(self.location.origin) &&
+      !url.hostname.includes('labreconquista.github.io')) {
     return;
   }
 
   event.respondWith(
-    fetch(event.request)
-      .then(response => {
-        // No cachear respuestas no exitosas
-        if (!response || response.status !== 200) {
+    caches.match(event.request).then(cached => {
+      // Devolver caché si existe
+      if (cached) return cached;
+
+      // Si no está en caché, buscar en red y guardar
+      return fetch(event.request).then(response => {
+        // Solo cachear respuestas válidas
+        if (!response || response.status !== 200 || response.type !== 'basic') {
           return response;
         }
-
-        // Clonar la respuesta
         const responseToCache = response.clone();
-
-        caches.open(CACHE_NAME)
-          .then(cache => {
-            cache.put(event.request, responseToCache);
-          });
-
+        caches.open(CACHE_NAME).then(cache => {
+          cache.put(event.request, responseToCache);
+        });
         return response;
-      })
-      .catch(() => {
-        // Fallback al caché
-        return caches.match(event.request)
-          .then(response => {
-            return response || new Response('Offline - No hay caché disponible', {
-              status: 503,
-              statusText: 'Service Unavailable',
-              headers: new Headers({
-                'Content-Type': 'text/plain'
-              })
-            });
-          });
-      })
+      }).catch(() => {
+        // Sin red y sin caché: devolver index.html como fallback
+        return caches.match('/index.html');
+      });
+    })
   );
 });
